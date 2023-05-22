@@ -9,6 +9,8 @@ void sighandler(int sig)
    {
     //printf("Caught signal %d\n", sig);
       stopReactor(gReactor);
+      deleteReactor(gReactor);
+      exit(0);
    }
 }
 // Return a listening socket
@@ -56,7 +58,7 @@ int get_listener_socket(void)
     }
 
     // Listen
-    if (listen(listener, 10) == -1) {
+    if (listen(listener, 5120) == -1) {
         return -1;
     }
 
@@ -77,7 +79,7 @@ void del_from_pfds(Reactor* reactor, int fd)
         // File descriptor not found
         return;
     }
-     printf("del_from_pfds: %d   i: %d   fd c: %d\n", reactor->pfds[i].fd,i, reactor->fd_count);
+     //printf("del_from_pfds: %d   i: %d   fd c: %d\n", reactor->pfds[i].fd,i, reactor->fd_count);
     // Copy the one from the end over this one
     reactor->pfds[i] = reactor->pfds[reactor->fd_count - 1];
     reactor->handlers[i] = reactor->handlers[reactor->fd_count - 1];
@@ -108,7 +110,7 @@ void handleClientData(int fd, void *arg)
         del_from_pfds(reactor, fd);
     } else {
              // We got some good data from a client
-        printf("pollserver: %s", buf);
+        printf("pollserver: %s\n", buf);
     }
 }
 void newConnectionHandler(int fd, void* arg) {
@@ -118,7 +120,7 @@ void newConnectionHandler(int fd, void* arg) {
 void handleNewConnection(Reactor* reactor)
 {
     int listener = reactor->listener;
-    printf("listener: %d\n", listener);
+    //printf("listener: %d\n", listener);
     //sleep(1);
     struct sockaddr_storage remoteaddr; // Client address
     socklen_t addrlen;
@@ -136,7 +138,7 @@ void handleNewConnection(Reactor* reactor)
 
         printf("pollserver: new connection from %s on socket %d\n",inet_ntop(remoteaddr.ss_family,
         get_in_addr((struct sockaddr*)&remoteaddr),reactor->remoteIP, INET6_ADDRSTRLEN),newfd);
-        printf("ip: %s\n", reactor->remoteIP);
+        //printf("ip: %s\n", reactor->remoteIP);
     }
 
 }
@@ -166,22 +168,8 @@ int main(void)
 
     startReactor(gReactor);
   
-    while (gReactor->active)
-    {
-       //printf("reactot is active%d\n", gReactor->active);
-       sleep(1);
-    }
+    waitFor(gReactor);
     
-    
-    
-    // Cleanup and free resources
-    
-    //delet aloocated memory
-    
-    deleteReactor(gReactor);
-    printf("reactor is not active\n");
-
-  
     
     
 

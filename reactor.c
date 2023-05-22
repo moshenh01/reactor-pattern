@@ -26,6 +26,7 @@ void stopReactor(void* this)
     if (reactor->active) {
         reactor->active = 0;
         printf("Stopping reactor\n");
+        pthread_cancel(reactor->thread);
         pthread_join(reactor->thread, NULL);
         printf("Reactor stopped\n");
     }
@@ -38,7 +39,7 @@ void* reactorThread(void* arg)
 {
     Reactor* reactor = (Reactor*)arg;
     while (reactor->active) {
-        int poll_count = poll(reactor->pfds, reactor->fd_count, 2500);
+        int poll_count = poll(reactor->pfds, reactor->fd_count, -1);
         //printf("poll_count: %d\n", poll_count);
         if (poll_count == -1) {
             perror("poll");
