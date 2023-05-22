@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <poll.h>
+#include <signal.h>
 #include <pthread.h>
 
 // Function pointer type for event handlers
@@ -46,6 +47,7 @@ void startReactor(void* this);
 void addFd(void* this, int fd, handler_t handler);
 void waitFor(void* this);
 void* get_in_addr(struct sockaddr *sa);
+void deleteReactor(void* this);
 
 
 int get_listener_socket(void);

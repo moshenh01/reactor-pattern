@@ -25,7 +25,9 @@ void stopReactor(void* this)
     Reactor* reactor = (Reactor*)this;
     if (reactor->active) {
         reactor->active = 0;
+        printf("Stopping reactor\n");
         pthread_join(reactor->thread, NULL);
+        printf("Reactor stopped\n");
     }
 }
 
@@ -36,8 +38,8 @@ void* reactorThread(void* arg)
 {
     Reactor* reactor = (Reactor*)arg;
     while (reactor->active) {
-        int poll_count = poll(reactor->pfds, reactor->fd_count, -1);
-        printf("poll_count: %d\n", poll_count);
+        int poll_count = poll(reactor->pfds, reactor->fd_count, 2500);
+        //printf("poll_count: %d\n", poll_count);
         if (poll_count == -1) {
             perror("poll");
             exit(1);
@@ -66,12 +68,18 @@ void* reactorThread(void* arg)
 void startReactor(void* this)
 {
     Reactor* reactor = (Reactor*)this;
-    if(reactor->active == 0)
+    if(reactor->active == 0){
         reactor->active = 1;
-        else
+    }
+    else{
         return;
-    pthread_create(&reactor->thread, NULL, reactorThread, reactor);
-    
+    }
+    int result = pthread_create(&reactor->thread, NULL, reactorThread, reactor);
+     if (result != 0) {
+        perror("pthread_create");
+        exit(1);
+    }
+   
 }
 
 // Add a new file descriptor and its handler to the reactor
@@ -103,10 +111,36 @@ void waitFor(void* this)
     Reactor* reactor = (Reactor*)this;
 
     if (reactor->active) {
-        pthread_join(reactor->thread, NULL);
+       int res = pthread_join(reactor->thread, NULL);
+         if(res != 0)
+         {
+              perror("pthread_join");
+              exit(1);
+         }
+         printf("Reactor thread finished\n");
+       
     }
 }
-// Get sockaddr, IPv4 or IPv6:
+//func that deleta all reactor allocated memory
+void deleteReactor(void* this)
+{
+    if(this == NULL)
+    {
+        printf("Reactor is NULL\n");
+        return;
+    }
+    if(((Reactor*)this)->active)
+    {
+      waitFor(this);
+    }
+    printf("Reactor deleted\n");
+    Reactor* reactor = (Reactor*)this;
+    free(reactor->handlers);
+    free(reactor->pfds);
+    free(reactor->remoteIP);
+    free(reactor);
+    
+}
 
 
 

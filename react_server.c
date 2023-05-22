@@ -2,7 +2,15 @@
 #include "reactor.h"
 
 #define PORT "9034"   // Port we're listening on
-
+Reactor *gReactor;
+void sighandler(int sig)
+{
+   if(sig == SIGINT)
+   {
+    //printf("Caught signal %d\n", sig);
+      stopReactor(gReactor);
+   }
+}
 // Return a listening socket
 int get_listener_socket(void)
 {
@@ -65,6 +73,10 @@ void del_from_pfds(Reactor* reactor, int fd)
             break;
         }
     }
+    if (i == reactor->fd_count) {
+        // File descriptor not found
+        return;
+    }
      printf("del_from_pfds: %d   i: %d   fd c: %d\n", reactor->pfds[i].fd,i, reactor->fd_count);
     // Copy the one from the end over this one
     reactor->pfds[i] = reactor->pfds[reactor->fd_count - 1];
@@ -106,7 +118,7 @@ void newConnectionHandler(int fd, void* arg) {
 void handleNewConnection(Reactor* reactor)
 {
     int listener = reactor->listener;
-   // printf("listener: %d\n", listener);
+    printf("listener: %d\n", listener);
     //sleep(1);
     struct sockaddr_storage remoteaddr; // Client address
     socklen_t addrlen;
@@ -136,9 +148,9 @@ int main(void)
     
 
 
-    Reactor* reactor = createReactor();
+    gReactor = createReactor();
     printf("reactor created\n");
-   
+    signal(SIGINT, sighandler);
 
     
     int listener;     // Listening socket descriptor
@@ -150,25 +162,24 @@ int main(void)
         exit(1);
     }
    
-    addFd(reactor, listener, newConnectionHandler);
+    addFd(gReactor, listener, newConnectionHandler);
 
-    startReactor(reactor);
+    startReactor(gReactor);
   
+    while (gReactor->active)
+    {
+       //printf("reactot is active%d\n", gReactor->active);
+       sleep(1);
+    }
     
     
     
-
-    waitFor(reactor);
-    stopReactor(reactor);
-
-
     // Cleanup and free resources
-    //dlclose(libHandle);
+    
     //delet aloocated memory
-    free(reactor->pfds);
-    free(reactor->handlers);
-    free(reactor->remoteIP);
-    free(reactor);
+    
+    deleteReactor(gReactor);
+    printf("reactor is not active\n");
 
   
     

@@ -22,5 +22,8 @@ client.o: client.c
 reactor.o: reactor.c reactor.h
 	$(CC) $(FLAGS) -c -fPIC reactor.c
 
+valgrind:
+	valgrind --leak-check=full --show-leak-kinds=all ./react_server
+
 clean:
 	rm -f *.o *.so react_server client
